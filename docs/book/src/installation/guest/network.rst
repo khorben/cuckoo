@@ -18,7 +18,7 @@ requests.
 
 You can do so from Windows' Control Panel as shown in the picture:
 
-    .. figure:: ../../_images/screenshots/windows_security.png
+    .. image:: ../../_images/screenshots/windows_security.png
         :align: center
 
 Virtual Networking
@@ -27,34 +27,38 @@ Virtual Networking
 Now you need to decide how to make your virtual machine able to access Internet
 or your local network.
 
-By default VirtualBox adopts Network Address Translation (NAT) which in most
-cases will be good enough for any needs.
-This is also the configuration we'll adopt in this documentation.
+While in previous releases Cuckoo used shared folders to exchange data between
+the Host and Guests, from release 0.4 it adopts a custom agent that works
+over the network using a simple XMLRPC protocol.
 
-If you have particular needs and want to use some different networking, please
-refer to VirtualBox's `virtual networking documentation`_.
+In order to make it work properly you'll have to configure your machine's
+network so that the Host and the Guest can communicate.
+Test network trying to ping a guest is a good practice, to be sure about
+virtual network setup.
+Use only static address for your guest, as today Cuckoo doesn't support DHCP and
+using it will break your setup.
 
-.. _`virtual networking documentation`: https://www.virtualbox.org/manual/ch06.html
+This stage is very much up to your own requirements and to the
+characteristics of your virtualization software.
 
-Network Tracing
-===============
+    .. warning:: Virtual networking errors!
+        Virtual networking is a vital component for Cuckoo, you must be really
+        sure to get connectivity between host and guest.
+        Most of the issues reported by users are related to a wrong setup of
+        their networking.
+        You you aren't sure about that check your virtualization software
+        documentation and test connectivity with ping and telnet.
 
-Unless you decided to use an external sniffer (as previously discussed in
-:doc:`../host/configuration`), you can proceed configuring the network trace
-functionality provided by VirtualBox as explained `here`_.
+The recommended setup is using a Host-Only networking layout with proper
+forwarding and filtering configuration done with ``iptables`` on the Host.
 
-First you need to power off your virtual machine::
+For example, using VirtualBox, you can enable Internet access to the virtual
+machines using the following ``iptables`` rules::
 
-    $ VBoxManage controlvm "Name of VM" poweroff
+    iptables -A FORWARD -o eth0 -i vboxnet0 -s 192.168.56.0/24 -m conntrack --ctstate NEW -j ACCEPT
+    iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    iptables -A POSTROUTING -t nat -j MASQUERADE
 
-Then you enable network trace::
+And adding IP forward::
 
-    $ VBoxManage modifyvm "Name of VM" --nictrace1 on --nictracefile1 /path/to/cuckoo/shares/<VM ID>/dump.pcap
-
-The last argument specifies the path where the PCAP file will be stored. It has
-to be an absolute path and include the file name as well. In order to make
-Cuckoo able to find the file you'll have to specify the shared folder you
-created for current virtual machine and "*dump.pcap*".
-
-.. _`here`: https://www.virtualbox.org/wiki/Network_tips
-
+    sysctl -w net.ipv4.ip_forward=1

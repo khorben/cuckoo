@@ -2,16 +2,11 @@
 Creation of the Virtual Machine
 ===============================
 
-Once you have :doc:`properly installed <../host/requirements>` VirtualBox you
-can proceed on creating all the virtual machines you need.
+Once you have :doc:`properly installed <../host/requirements>` your virtualization
+software, you can proceed on creating all the virtual machines you need.
 
-To do so you can either use the graphical user interface or the powerful
-command-line utility *VBoxManage* provided by VirtualBox.
-
-Consider that the use of VirtualBox is not in the purposes of this documentation
-so please refer to the `official documentation`_ for it.
-
-.. _official documentation: https://www.virtualbox.org/manual/UserManual.html
+Using and configuring your virtualization software is out of the scope of this
+guide, so please refer to the official documentation.
 
     .. note::
 
@@ -25,6 +20,11 @@ so please refer to the `official documentation`_ for it.
         3, but Cuckoo Sandbox also proved to work with Windows 7 with User
         Access Control disabled.
 
+    .. note::
+
+        KVM Users - Be sure to choose a hard drive image format that supports snapshots.
+        See :doc:`../../Installation/Preparing the Guest/Saving the Virtual Machine/KVM`
+        for more information.
+
 When creating the virtual machine, Cuckoo doesn't require any specific
 configuration. You can choose the options that best fit your needs.
-

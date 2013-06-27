@@ -3,60 +3,84 @@ Requirements
 ============
 
 Before proceeding on configuring Cuckoo, you'll need to install some required
-software and libraries.
+softwares and libraries.
 
 Installing Python libraries
 ===========================
 
 Cuckoo host components are completely written in Python, therefore make sure to
-have an appropriate version installed. For current release Python 2.6 or 2.7 are
-preferred.
+have an appropriate version installed. For current release **Python 2.7** is preferred.
 
 Install Python on Ubuntu::
 
     $ sudo apt-get install python
 
-Cuckoo makes use of several libraries which include:
+In order to properly function, Cuckoo requires SQLAlchemy to be installed.
 
-    * `Magic`_: for detecting file types.
-    * `Dpkt`_: for extracting relevant information from PCAP files.
-    * `Mako`_: for rendering the HTML reports and the web interface.
+Install with ``apt-get``::
 
-On Ubuntu you can install all of them with the following command::
+    $ sudo apt-get install python-sqlalchemy
 
-    $ sudo apt-get install python-magic python-dpkt python-mako
+Install with ``pip``::
 
-On different distributions refer to the provided official homepage to retrieve
-other installers or sources.
-Please notice that there are two libmagic Python bindings available on the
-Internet: while we highly encourage you to use the official ones provided by the
-link from this guide, Cuckoo Sandbox should be able to work with both of them.
+    $ sudo pip install sqlalchemy
 
-Other optional libraries, which do not affect Cuckoo's execution, include:
+There are other optional dependencies that are mostly used by modules and utilities.
+The following libraries are not strictly required, but their installation is recommended:
 
-    * `Pyssdeep`_: for calculating ssdeep fuzzy hash of files.
+    * `Dpkt`_ (Highly Recommended): for extracting relevant information from PCAP files.
+    * `Jinja2`_ (Highly Recommended): for rendering the HTML reports and the web interface.
+    * `Magic`_ (Optional): for identifying files' formats (otherwise use "file" command line utility)
+    * `Pydeep`_ (Optional): for calculating ssdeep fuzzy hash of files.
+    * `Pymongo`_ (Optional): for storing the results in a MongoDB database.
+    * `Yara`_ and Yara Python (Optional): for matching Yara signatures (use the svn version).
+    * `Libvirt`_ (Optional): for using the KVM machine manager.
+    * `Bottlepy`_ (Optional): for using the ``web.py`` and ``api.py`` utilities.
+    * `Pefile`_ (Optional): used for static analysis of PE32 binaries.
+
+Some of them are already packaged in Debian/Ubuntu and can be installed with the following command::
+
+    $ sudo apt-get install python-dpkt python-jinja2 python-magic python-pymongo python-libvirt python-bottle python-pefile
+
+Except for *python-magic* and *python-libvirt*, the others can be installed through ``pip`` too::
+
+    $ sudo pip install dpkt jinja2 pymongo bottle pefile
+
+*Yara* and *Pydeep* will have to be installed manually, so please refer to their websites.
+
+If want to use KVM it's packaged too and you can install it with the following command::
+
+    $ sudo apt-get install qemu-kvm libvirt-bin ubuntu-vm-builder bridge-utils
 
 .. _Magic: http://www.darwinsys.com/file/
 .. _Dpkt: http://code.google.com/p/dpkt/
-.. _Mako: http://www.makotemplates.org
-.. _Pyssdeep: http://code.google.com/p/pyssdeep/
+.. _Jinja2: http://jinja.pocoo.org/docs/
+.. _Pydeep: https://github.com/kbandla/pydeep
+.. _Pymongo: http://pypi.python.org/pypi/pymongo/
+.. _Yara: http://code.google.com/p/yara-project/
+.. _Libvirt: http://www.libvirt.org
+.. _Bottlepy: http://www.bottlepy.org
+.. _Pefile: http://code.google.com/p/pefile/
 
-Installing VirtualBox
-=====================
+Virtualization Software
+=======================
 
-At current stage, Cuckoo heavily relies on `VirtualBox`_ as it's unique
-virtualization engine.
+Despite heavily relying on `VirtualBox`_ in the past, Cuckoo has moved on being
+architecturally independent from the virtualization software.
+As you will see throughout this documentation, you'll be able to define and write
+modules to support any software of your choice.
 
-Despite being often packaged by all GNU/Linux distributions, you are encouraged
-to download and install the latest version from the official website. The reason
-behind this choice is that packaged versions of VirtualBox (called OSE)
-generally have some limitations or adjustments in order to meet requirements of
-the GNU GPL license.
+For the sake of this guide we will assume that you have VirtualBox installed
+(which still is the default option), but this does **not** affect anyhow the
+execution and general configuration of the sandbox.
 
-You can get the proper package for your distribution at the `official download
-page`_.
+You are completely responsible for the choice, configuration and execution of
+your virtualization software, therefore please hold from asking help on it in our
+channels and lists: refer to the software's official documentation and support.
 
-The installation of VirtualBox is not in purposes of this documentation, if you
+Assuming you decide to go for VirtualBox, you can get the proper package for
+your distribution at the `official download page`_.
+The installation of VirtualBox is not in the purpose of this documentation, if you
 are not familiar with it please refer to the `official documentation`_.
 
 .. _VirtualBox: http://www.virtualbox.org
@@ -66,13 +90,11 @@ are not familiar with it please refer to the `official documentation`_.
 Installing Tcpdump
 ==================
 
-By default Cuckoo makes use of VirtualBox's embedded network tracing
-functionalities, but in some cases or some network configurations you might need
-to adopt an external network sniffer.
+In order to dump the network activity performed by the malware during
+execution, you'll need a network sniffer properly configured to capture
+the traffic and dump it to a file.
 
-If you intend to use VirtualBox's own network trace, you can skip this section.
-
-The best choice for packet interception is `tcpdump`_ of course.
+By default Cuckoo adopts `tcpdump`_, the prominent open source solution.
 
 Install it on Ubuntu::
 
@@ -87,6 +109,14 @@ You can verify the results of last command with::
 
     $ getcap /usr/sbin/tcpdump 
     /usr/sbin/tcpdump = cap_net_admin,cap_net_raw+eip
+
+If you don't have `setcap` installed you can get it with::
+
+    $ sudo apt-get install libcap2-bin
+
+Or otherwise (**not recommended**) do::
+
+    $ sudo chmod +s /usr/sbin/tcpdump
 
 .. _tcpdump: http://www.tcpdump.org
 
