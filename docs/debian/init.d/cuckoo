@@ -1,0 +1,52 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:		cuckoo
+# Required-Start:	$remote_fs $syslog
+# Required-Stop:	$remote_fs $syslog
+# Should-Stop:		
+# Default-Start:	2 3 4 5
+# Default-Stop:		0 1 6
+# Short-Description:	Cuckoo Sandbox
+# Description:		Automated malware analysis
+### END INIT INFO
+
+DAEMON=/usr/local/cuckoo/cuckoo.py
+PYTHON=/usr/bin/python
+NAME=cuckoo
+DESC="Cuckoo Sandbox"
+[ -r $DAEMON ] || exit 0
+[ -x $PYTHON ] || exit 0
+
+OWNER=cuckoo
+HOMEDIR=$(dirname "$DAEMON")
+PIDFILE="/var/run/cuckoo.pid"
+
+[ -r /etc/default/cuckoo ] && . /etc/default/cuckoo
+
+. /lib/lsb/init-functions
+
+case "$1" in
+	start)
+		OPTIND=1
+		log_daemon_msg "Starting $DESC" "$NAME"
+		start-stop-daemon --start -c "$OWNER" -d "$HOMEDIR" -b -m -p "$PIDFILE" --exec $PYTHON $DAEMON
+		log_end_msg $?
+		;;
+	stop)
+		OPTIND=1
+		log_daemon_msg "Stopping $DESC" "$NAME"
+		start-stop-daemon --stop -p "$PIDFILE"
+		log_end_msg $?
+		;;
+	restart|force-reload)
+		$0 stop
+		$0 start
+		;;
+	*)
+		log_action_msg "Usage: $0 {start|stop|restart|force-reload}" >&2
+		exit 1
+		;;
+esac
+
+exit 0
